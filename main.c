@@ -84,7 +84,6 @@ void InitTimer2_PWM(void){
 
  TIM2_CCER1 = 0x00;  // Disable the Channels 1-2
  TIM2_CCER1 = 0x33;  // Enable the Channel 1-2 & Low Polarity
- TIM2_CCER1_bit.CC1E = 0;
 
  TIM2_CCMR2 = 0x78;  // PWM Mode2(CH2) - Preload  Enabled
  TIM2_CR1  |= 0x80;  // AutoReload aktif durumda.
@@ -132,7 +131,7 @@ void sensors_init(){
   EXTI_CR1_bit.PAIS = 2;
   EXTI_CR2_bit.TLIS = 0;
 }
-void motor1_move( byte dir /* 1 : forward, 0 : backward*/, unsigned char speed /* 0-999 */){
+void motor1_move( int dir /* 1 : forward, 0 : backward*/, unsigned int speed /* 0-999 */){
   if(speed > 999) speed = 999;
   
   TIM2_CCR1H = (speed >> 8); 
@@ -141,7 +140,7 @@ void motor1_move( byte dir /* 1 : forward, 0 : backward*/, unsigned char speed /
   TIM2_CCR2L = TIM2_CCR1L;
 
   TIM2_CCER1_bit.CC1E = (dir) ? dir : 0;
-  TIM2_CCER1_bit.CC2E = (!dir) ? dir : 0;
+  TIM2_CCER1_bit.CC2E = (!dir) ? 1 : 0;
 }
 /** 
   * @brief  Main program. 
@@ -150,19 +149,24 @@ void motor1_move( byte dir /* 1 : forward, 0 : backward*/, unsigned char speed /
   */ 
 void main(void) { 
   InitialiseSystemClock();
+  
   __disable_interrupt();
-
+  InitialiseUART();
+  InitTimer2_PWM();
+  
   motors_init();
   sensors_init();
-  InitialiseUART();
+  
+  
 
   __enable_interrupt();
  
   while(whell1_count < 50){
     __disable_interrupt();
-    motor1_move(1,999);
+    motor1_move(0,999);
     __enable_interrupt();
   }
+  motor1_move(0,0);
 
   while (1) {
 
